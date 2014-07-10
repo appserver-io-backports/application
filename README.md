@@ -1,6 +1,6 @@
 # TechDivision_Application
 
-[![Latest Stable Version](https://poser.pugx.org/techdivision/application/v/stable.png)](https://packagist.org/packages/techdivision/application) [![Total Downloads](https://poser.pugx.org/techdivision/application/downloads.png)](https://packagist.org/packages/techdivision/application) [![Latest Unstable Version](https://poser.pugx.org/techdivision/application/v/unstable.png)](https://packagist.org/packages/techdivision/application) [![License](https://poser.pugx.org/techdivision/application/license.png)](https://packagist.org/packages/techdivision/application) [![Build Status](https://travis-ci.org/techdivision/application.png)](https://travis-ci.org/techdivision/application)
+[![Latest Stable Version](https://poser.pugx.org/techdivision/application/v/stable.png)](https://packagist.org/packages/techdivision/application) [![Total Downloads](https://poser.pugx.org/techdivision/application/downloads.png)](https://packagist.org/packages/techdivision/application) [![Latest Unstable Version](https://poser.pugx.org/techdivision/application/v/unstable.png)](https://packagist.org/packages/techdivision/application) [![License](https://poser.pugx.org/techdivision/application/license.png)](https://packagist.org/packages/techdivision/application) [![Build Status](https://travis-ci.org/techdivision/TechDivision_Application.png)](https://travis-ci.org/techdivision/TechDivision_Application)
 
 ## Introduction
 
