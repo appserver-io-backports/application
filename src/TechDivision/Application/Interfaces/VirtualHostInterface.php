@@ -23,7 +23,7 @@
 
 namespace TechDivision\Application\Interfaces;
 
-use TechDivision\ApplicationServer\Interfaces\ApplicationInterface;
+use TechDivision\Application\Interfaces\ApplicationInterface;
 
 /**
  * A virtual host interface.
