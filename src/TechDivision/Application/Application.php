@@ -20,7 +20,7 @@
  * @link      http://www.appserver.io
  */
 
-namespace TechDivision\ApplicationServer;
+namespace TechDivision\Application;
 
 use TechDivision\Storage\GenericStackable;
 use TechDivision\Application\Interfaces\ManagerInterface;

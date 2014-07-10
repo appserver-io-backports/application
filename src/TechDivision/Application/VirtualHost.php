@@ -23,8 +23,8 @@
 namespace TechDivision\Application;
 
 use TechDivision\Storage\GenericStackable;
-use TechDivision\ApplicationServer\Interfaces\ApplicationInterface;
-use TechDivision\ApplicationServer\Interfaces\VirtualHostInterface;
+use TechDivision\Application\Interfaces\ApplicationInterface;
+use TechDivision\Application\Interfaces\VirtualHostInterface;
 
 /**
  * A basic virtual host class containing virtual host meta information like
