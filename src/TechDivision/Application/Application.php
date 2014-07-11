@@ -76,7 +76,7 @@ class Application extends \Thread implements ApplicationInterface
      *
      * @var \TechDivision\Storage\GenericStackable
      */
-    protected $vhosts;
+    protected $virtualHosts;
 
     /**
      * Storage for the available managers.
@@ -97,8 +97,8 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function __construct()
     {
-        $this->vhosts = new GenericStackable();
         $this->managers = new GenericStackable();
+        $this->virtualHosts = new GenericStackable();
         $this->classLoaders = new GenericStackable();
     }
 
@@ -251,9 +251,9 @@ class Application extends \Thread implements ApplicationInterface
      *
      * @return \TechDivision\Storage\GenericStackable The available virtual host configurations
      */
-    public function getVhosts()
+    public function getVirtualHosts()
     {
-        return $this->vhosts;
+        return $this->virtualHosts;
     }
 
     /**
@@ -301,7 +301,7 @@ class Application extends \Thread implements ApplicationInterface
     {
 
         // check if the application is a virtual host for the passed server name
-        foreach ($this->getVHosts() as $virtualHost) {
+        foreach ($this->getVirtualHosts() as $virtualHost) {
 
             // compare the virtual host name itself
             if (strcmp($virtualHost->getName(), $serverName) === 0) {
@@ -321,7 +321,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function addVirtualHost(VirtualHostInterface $virtualHost)
     {
-        $this->vhosts[] = $virtualHost;
+        $this->virtualHosts[] = $virtualHost;
     }
 
     /**
@@ -420,24 +420,6 @@ class Application extends \Thread implements ApplicationInterface
 
         // register the class loaders
         $this->registerClassLoaders();
-
-        // load and initialize the session manager
-        if ($sessionManager = $this->getManager(SessionManager::IDENTIFIER)) {
-
-            // prepare the default session save path
-            $sessionSavePath = $this->getWebappPath() . DIRECTORY_SEPARATOR . 'WEB-INF' . DIRECTORY_SEPARATOR . 'sessions';
-
-            // load the settings, set the default session save path
-            $sessionSettings = $sessionManager->getSessionSettings();
-            $sessionSettings->setSessionSavePath($sessionSavePath);
-
-            // if we've session parameters defined in our servlet context
-            if ($this->servletContext && $this->servletContext->hasSessionParameters()) {
-
-                // we want to merge the session settings from the servlet context into our session manager
-                $sessionSettings->mergeServletContext($this->servletContext);
-            }
-        }
 
         // initialize the managers
         $this->initializeManagers();
