@@ -9,7 +9,9 @@
         "techdivision/context" : "0.5.*"
     },
     "autoload": {
-        "psr-0": { "TechDivision\\Application": "src/" }
+        "psr-0": { 
+            "TechDivision\\Application": [ "src/", "tests/" ]
+        }
     },
     "config":{
         "github-oauth":{
