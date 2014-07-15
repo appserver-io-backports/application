@@ -1,22 +1,21 @@
 {
     "name": "techdivision/application",
-    "type": "package",
     "description": "A threaded application implementation to allow a separate context for each application.",
     "homepage": "https://github.com/techdivision/TechDivision_Application",
     "license": [ "OSL-3.0" ],
-    "minimum-stability": "dev",
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/techdivision/TechDivision_Application"
-        }
-    ],
     "require": {
-        "php" : ">=5.3.0",
-        "techdivision/storage" : "dev-master",
-        "techdivision/context" : "dev-master"
+        "php" : ">=5.4.0",
+        "techdivision/storage" : "0.5.*",
+        "techdivision/context" : "0.5.*"
     },
     "autoload": {
-        "psr-0": { "TechDivision\\Application": "src/" }
+        "psr-0": { 
+            "TechDivision\\Application": [ "src/", "tests/" ]
+        }
+    },
+    "config":{
+        "github-oauth":{
+            "github.com":"604a3b5943228e434a5b52c2ba3cf72286d30db9"
+        }
     }
 }
