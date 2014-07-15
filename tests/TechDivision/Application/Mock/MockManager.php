@@ -45,7 +45,7 @@ class MockManager extends \Stackable implements ManagerInterface
      *
      * @var string
      */
-    const IDENTIFIER = MockManager::class;
+    const IDENTIFIER = 'TechDivision\Application\Mock\MockManager';
 
     /**
      * Initializes the mock manager with a unique identifier.
