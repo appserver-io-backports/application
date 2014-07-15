@@ -354,6 +354,7 @@ class Application extends \Thread implements ApplicationInterface
      *
      * @return void
      * @see \Thread::run()
+     * @codeCoverageIgnore
      */
     public function connect()
     {
@@ -368,30 +369,6 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function registerClassLoaders()
     {
-
-        // initialize the class loader with the additional folders
-        set_include_path(get_include_path() . PATH_SEPARATOR . $this->getWebappPath());
-        set_include_path(get_include_path() . PATH_SEPARATOR . $this->getWebappPath() . DIRECTORY_SEPARATOR . 'WEB-INF' . DIRECTORY_SEPARATOR . 'classes');
-        set_include_path(get_include_path() . PATH_SEPARATOR . $this->getWebappPath() . DIRECTORY_SEPARATOR . 'WEB-INF' . DIRECTORY_SEPARATOR . 'lib');
-        set_include_path(get_include_path() . PATH_SEPARATOR . $this->getWebappPath() . DIRECTORY_SEPARATOR . 'META-INF' . DIRECTORY_SEPARATOR . 'classes');
-        set_include_path(get_include_path() . PATH_SEPARATOR . $this->getWebappPath() . DIRECTORY_SEPARATOR . 'META-INF' . DIRECTORY_SEPARATOR . 'lib');
-
-        /**
-         * @TODO Refactor to allow PBC class loader also, maybe with a class loader factory!
-         *
-         * $config Config::getInstance();
-         * $config->setXXX();
-         *
-         * $classLoader = new AutoLoader($config);
-         *
-         * $autoLoaderConfig = $this->getWebappPath() . DIRECTORY_SEPARATOR . 'WEB-INF' . DIRECTORY_SEPARATOR . 'pbc.conf.json';
-         * if (file_exists($autoLoaderConfig)) {
-         *     Config::getInstance()->load($autoLoaderConfig);
-         *     $classLoader = new AutoLoader();
-         *     $classLoader->register();
-         * }
-         */
-
         foreach ($this->getClassLoaders() as $classLoader) {
             $classLoader->register(true, true);
         }
@@ -414,6 +391,7 @@ class Application extends \Thread implements ApplicationInterface
      * instanciates all the necessary manager instances.
      *
      * @return void
+     * @codeCoverageIgnore
      */
     public function run()
     {

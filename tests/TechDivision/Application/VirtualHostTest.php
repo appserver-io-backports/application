@@ -33,18 +33,69 @@ namespace TechDivision\Application;
  * @link      https://github.com/techdivision/TechDivision_Application
  * @link      http://www.appserver.io
  */
-class VhostTest extends \PHPUnit_Framework_TestCase
+class VirtualHostTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
-     * Test if the VHost has successfully been initialized.
+     * The virtual host name for testing purposes.
+     *
+     * @var  string
+     */
+    const NAME = 'foo.bar';
+
+    /**
+     * The application base directory name for testing purposes.
+     *
+     * @var  string
+     */
+    const APP_BASE = '/foo.bar';
+
+    /**
+     * The virtual host instance we want to test.
+     *
+     * @var \TechDivision\Application\VirtualHost
+     */
+    protected $virtualHost;
+
+    /**
+     * Initialize the instance to test.
+     *
+     * @return void
+     */
+    public function setUp()
+    {
+        $this->virtualHost = new VirtualHost(VirtualHostTest::NAME, VirtualHostTest::APP_BASE);
+    }
+
+    /**
+     * Test if the virtual host has successfully been initialized.
      *
      * @return void
      */
     public function testConstructor()
     {
-        $vhost = new VirtualHost($name = 'foo.bar', $appBase = '/foo.bar');
-        $this->assertSame($name, $vhost->getName());
-        $this->assertSame($appBase, $vhost->getAppBase());
+        $this->assertSame(VirtualHostTest::NAME, $this->virtualHost->getName());
+        $this->assertSame(VirtualHostTest::APP_BASE, $this->virtualHost->getAppBase());
+    }
+
+    /**
+     * Test if the match method matches the passed application.
+     *
+     * @return void
+     */
+    public function testMatch()
+    {
+
+        // initialize the array with the methods to mock
+        $methodsToMock = array('connect', 'getAttribute', 'getBaseDirectory', 'getAppBase', 'getWebappPath', 'getName');
+
+        // create a mock object for the application
+        $applicationMock = $this->getMock('TechDivision\Application\Interfaces\ApplicationInterface', $methodsToMock);
+        $applicationMock->expects($this->once())
+            ->method('getName')
+            ->will($this->returnValue(VirtualHostTest::NAME));
+
+        // check that the virtual host matches the application
+        $this->assertTrue($this->virtualHost->match($applicationMock));
     }
 }
