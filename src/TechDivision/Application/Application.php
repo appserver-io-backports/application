@@ -44,11 +44,18 @@ class Application extends \Thread implements ApplicationInterface
 {
 
     /**
-     * The applications base directory.
+     * The absolute path to the applications base directory.
      *
      * @var string
      */
     protected $appBase;
+
+    /**
+     * The absolute path to the applications temporary directory.
+     *
+     * @var string
+     */
+    protected $tmpDir;
 
     /**
      * The web containers base directory.
@@ -140,15 +147,27 @@ class Application extends \Thread implements ApplicationInterface
     }
 
     /**
-     * Injects the applications base directory.
+     * Injects the absolute path to the applications base directory.
      *
-     * @param string $appBase The applications base directory
+     * @param string $appBase The absolute path to the applications base directory
      *
      * @return void
      */
     public function injectAppBase($appBase)
     {
         $this->appBase = $appBase;
+    }
+
+    /**
+     * Injects the absolute path to the applications temporary directory.
+     *
+     * @param string $appBase The absolute path to the applications temporary directory
+     *
+     * @return void
+     */
+    public function injectTmpDir($tmpDir)
+    {
+        $this->tmpDir = $tmpDir;
     }
 
     /**
@@ -207,6 +226,66 @@ class Application extends \Thread implements ApplicationInterface
     public function getAppBase()
     {
         return $this->appBase;
+    }
+
+    /**
+     * Returns the absolute path to the applications temporary directory.
+     *
+     * @return string The app temporary directory
+     */
+    public function getTmpDir()
+    {
+        return $this->tmpDir;
+    }
+
+    /**
+     * Returns the absolute path to the applications session directory.
+     *
+     * @return string The app session directory
+     */
+    public function getSessionDir()
+    {
+        return $this->getTmpDir() . DIRECTORY_SEPARATOR . ApplicationInterface::SESSION_DIRECTORY;
+    }
+
+    /**
+     * Returns the absolute path to the applications cache directory.
+     *
+     * @return string The app cache directory
+     */
+    public function getCacheDir()
+    {
+        return $this->getTmpDir() . DIRECTORY_SEPARATOR . ApplicationInterface::CACHE_DIRECTORY;
+    }
+
+    /**
+     * Injects the username the application should be executed with.
+     *
+     * @return string The username
+     */
+    public function getUser()
+    {
+        return $this->getInitialContext()->getSystemConfiguration()->getUser();
+    }
+
+    /**
+     * Injects the groupname the application should be executed with.
+     *
+     * @return string The groupname
+     */
+    public function getGroup()
+    {
+        return $this->getInitialContext()->getSystemConfiguration()->getGroup();
+    }
+
+    /**
+     * Returns the umask the application should create files/directories with.
+     *
+     * @return string The umask
+     */
+    public function getUmask()
+    {
+        return $this->getInitialContext()->getSystemConfiguration()->getUmask();
     }
 
     /**
@@ -382,7 +461,7 @@ class Application extends \Thread implements ApplicationInterface
     public function initializeManagers()
     {
         foreach ($this->getManagers() as $manager) {
-            $manager->initialize();
+            $manager->initialize($this);
         }
     }
 

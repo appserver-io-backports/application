@@ -51,7 +51,18 @@ interface ManagerInterface extends Context
      * Has been automatically invoked by the container after the application
      * instance has been created.
      *
+     * @param \TechDivision\Application\Interfaces\ApplicationInterface $application The application instance
+     *
      * @return void
      */
-    public function initialize();
+    public function initialize(ApplicationInterface $application);
+
+    /**
+     * Factory method that adds a initialized manager instance to the passed application.
+     *
+     * @param \TechDivision\Application\Interfaces\ApplicationInterface $application The application instance
+     *
+     * @return void
+     */
+    public static function get(ApplicationInterface $application);
 }
