@@ -24,6 +24,8 @@ namespace TechDivision\Application;
 
 use TechDivision\Application\Mock\MockManager;
 use TechDivision\Application\Mock\MockClassLoader;
+use TechDivision\Application\Mock\MockSystemConfiguration;
+use TechDivision\Application\Interfaces\ApplicationInterface;
 
 /**
  * Test implementation for the threaded application implementation.
@@ -59,6 +61,13 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
      * @var  string
      */
     const APP_BASE = '/opt/appserver/webapps';
+
+    /**
+     * The application temporary directory for testing purposes.
+     *
+     * @var  string
+     */
+    const TMP_DIR = '/opt/appserver/var/tmp/foo';
 
     /**
      * The server name for testing purposes.
@@ -117,6 +126,41 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Test if the getter/setter for the tmp dir works.
+     *
+     * @return void
+     */
+    public function testInjectGeTmpDir()
+    {
+        $this->application->injectTmpDir(ApplicationTest::TMP_DIR);
+        $this->assertEquals(ApplicationTest::TMP_DIR, $this->application->getTmpDir());
+    }
+
+    /**
+     * Test if the getter for the session dir works.
+     *
+     * @return void
+     */
+    public function testGetSessionDir()
+    {
+        $sessionDir = ApplicationTest::TMP_DIR . DIRECTORY_SEPARATOR . ApplicationInterface::SESSION_DIRECTORY;
+        $this->application->injectTmpDir(ApplicationTest::TMP_DIR);
+        $this->assertEquals($sessionDir, $this->application->getSessionDir());
+    }
+
+    /**
+     * Test if the getter for the cache dir works.
+     *
+     * @return void
+     */
+    public function testGetCacheDir()
+    {
+        $cacheDir = ApplicationTest::TMP_DIR . DIRECTORY_SEPARATOR . ApplicationInterface::CACHE_DIRECTORY;
+        $this->application->injectTmpDir(ApplicationTest::TMP_DIR);
+        $this->assertEquals($cacheDir, $this->application->getCacheDir());
+    }
+
+    /**
      * Test if the getter/setter for the initial context works.
      *
      * @return void
@@ -125,7 +169,7 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     {
 
         // define the methods to mock
-        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute');
+        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute', 'getSystemConfiguration');
 
         // create a mock instance
         $mockInitialContext = $this->getMock('TechDivision\Application\Interfaces\ContextInterface', $methodsToMock);
@@ -144,7 +188,7 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     {
 
         // define the methods to mock
-        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute');
+        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute', 'getSystemConfiguration');
 
         // create a mock instance
         $mockInitialContext = $this->getMock('TechDivision\Application\Interfaces\ContextInterface', $methodsToMock);
@@ -166,7 +210,7 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     {
 
         // define the methods to mock
-        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute');
+        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute', 'getSystemConfiguration');
 
         // create a mock instance
         $mockInitialContext = $this->getMock('TechDivision\Application\Interfaces\ContextInterface', $methodsToMock);
@@ -347,5 +391,89 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
 
         // check that the mock manager has been initialized
         $this->assertTrue($mockManager->isInitialized());
+    }
+
+    /**
+     * Test if the getter for the user works.
+     *
+     * @return void
+     */
+    public function testGetUser()
+    {
+
+        // create a mock system configuration
+        $mockSystemConfiguration = $this->getMock('TechDivision\Application\Mock\MockSystemConfiguration', array('getUser'));
+        $mockSystemConfiguration->expects($this->any())
+            ->method('getUser')
+            ->will($this->returnValue($user = 'www-data'));
+
+        // define the methods to mock
+        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute', 'getSystemConfiguration');
+
+        // create a mock instance
+        $mockInitialContext = $this->getMock('TechDivision\Application\Interfaces\ContextInterface', $methodsToMock);
+        $mockInitialContext->expects($this->any())
+            ->method('getSystemConfiguration')
+            ->will($this->returnValue($mockSystemConfiguration));
+
+        // check if the passed instance is equal to the getter one
+        $this->application->injectInitialContext($mockInitialContext);
+        $this->assertSame($user, $this->application->getUser());
+    }
+
+    /**
+     * Test if the getter for the group works.
+     *
+     * @return void
+     */
+    public function testGetGroup()
+    {
+
+        // create a mock system configuration
+        $mockSystemConfiguration = $this->getMock('TechDivision\Application\Mock\MockSystemConfiguration', array('getGroup'));
+        $mockSystemConfiguration->expects($this->any())
+            ->method('getGroup')
+            ->will($this->returnValue($group = 'www-data'));
+
+        // define the methods to mock
+        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute', 'getSystemConfiguration');
+
+        // create a mock instance
+        $mockInitialContext = $this->getMock('TechDivision\Application\Interfaces\ContextInterface', $methodsToMock);
+        $mockInitialContext->expects($this->any())
+            ->method('getSystemConfiguration')
+            ->will($this->returnValue($mockSystemConfiguration));
+
+        // check if the passed instance is equal to the getter one
+        $this->application->injectInitialContext($mockInitialContext);
+        $this->assertSame($group, $this->application->getGroup());
+    }
+
+    /**
+     * Test if the getter for the group works.
+     *
+     * @return void
+     */
+    public function testGetUmask()
+    {
+
+        // create a mock system configuration
+        $mockSystemConfiguration = $this->getMock('TechDivision\Application\Mock\MockSystemConfiguration', array('getUmask'));
+        $mockSystemConfiguration->expects($this->any())
+            ->method('getUmask')
+            ->will($this->returnValue($umask = 0002));
+
+        // define the methods to mock
+        $methodsToMock = array('getClassLoader', 'newInstance', 'newService', 'getAttribute', 'getSystemConfiguration');
+
+        // create a mock instance
+        $mockInitialContext = $this->getMock('TechDivision\Application\Interfaces\ContextInterface', $methodsToMock);
+        $mockInitialContext->expects($this->any())
+            ->method('getSystemConfiguration')
+            ->will($this->returnValue($mockSystemConfiguration));
+
+        // check if the passed instance is equal to the getter one
+        $this->application->injectInitialContext($mockInitialContext);
+        $this->assertSame($umask, $this->application->getUmask());
     }
 }
