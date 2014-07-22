@@ -161,7 +161,7 @@ class Application extends \Thread implements ApplicationInterface
     /**
      * Injects the absolute path to the applications temporary directory.
      *
-     * @param string $appBase The absolute path to the applications temporary directory
+     * @param string $tmpDir The absolute path to the applications temporary directory
      *
      * @return void
      */
