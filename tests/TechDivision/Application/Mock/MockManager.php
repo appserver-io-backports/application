@@ -24,6 +24,7 @@
 namespace TechDivision\Application\Mock;
 
 use TechDivision\Application\Interfaces\ManagerInterface;
+use TechDivision\Application\Interfaces\ApplicationInterface;
 
 /**
  * Test implementation for the virtual host.
@@ -72,11 +73,25 @@ class MockManager extends \Stackable implements ManagerInterface
      * Has been automatically invoked by the container after the application
      * instance has been created.
      *
+     * @param \TechDivision\Application\Interfaces\ApplicationInterface $application The application instance
+     *
      * @return void
      */
-    public function initialize()
+    public function initialize(ApplicationInterface $application)
     {
         $this->initialized = true;
+    }
+
+    /**
+     * Factory method that adds a initialized manager instance to the passed application.
+     *
+     * @param \TechDivision\Application\Interfaces\ApplicationInterface $application The application instance
+     *
+     * @return void
+     */
+    public static function get(ApplicationInterface $application)
+    {
+        return new MockManager();
     }
 
     /**

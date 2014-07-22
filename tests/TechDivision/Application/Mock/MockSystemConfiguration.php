@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TechDivision\Application\Interfaces\ManagerInterface
+ * TechDivision\Application\Mock\MockSystemConfiguration
  *
  * NOTICE OF LICENSE
  *
@@ -13,7 +13,7 @@
  *
  * @category   Library
  * @package    TechDivision_Application
- * @subpackage Interfaces
+ * @subpackage Mock
  * @author     Tim Wagner <tw@techdivision.com>
  * @copyright  2014 TechDivision GmbH <info@techdivision.com>
  * @license    http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
@@ -21,48 +21,47 @@
  * @link       http://www.appserver.io
  */
 
-namespace TechDivision\Application\Interfaces;
-
-use TechDivision\Context\Context;
+namespace TechDivision\Application\Mock;
 
 /**
- * Generic interface for all manager instances added to an application.
+ * Test implementation for a system configuration.
  *
  * @category   Library
  * @package    TechDivision_Application
- * @subpackage Interfaces
+ * @subpackage Mock
  * @author     Tim Wagner <tw@techdivision.com>
  * @copyright  2014 TechDivision GmbH <info@techdivision.com>
  * @license    http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * @link       https://github.com/techdivision/TechDivision_Application
  * @link       http://www.appserver.io
  */
-interface ManagerInterface extends Context
+class MockSystemConfiguration
 {
 
     /**
-     * The managers unique identifier.
+     * Returns a username.
      *
-     * @return string The unique identifier
+     * @return string The username
      */
-    public function getIdentifier();
+    public function getUser()
+    {
+    }
 
     /**
-     * Has been automatically invoked by the container after the application
-     * instance has been created.
+     * Returns a groupname.
      *
-     * @param \TechDivision\Application\Interfaces\ApplicationInterface $application The application instance
-     *
-     * @return void
+     * @return string The groupname
      */
-    public function initialize(ApplicationInterface $application);
+    public function getGroup()
+    {
+    }
 
     /**
-     * Factory method that adds a initialized manager instance to the passed application.
+     * Returns a umaks.
      *
-     * @param \TechDivision\Application\Interfaces\ApplicationInterface $application The application instance
-     *
-     * @return void
+     * @return integer The umask
      */
-    public static function get(ApplicationInterface $application);
+    public function getUmask()
+    {
+    }
 }

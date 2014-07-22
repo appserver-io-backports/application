@@ -87,7 +87,20 @@ class VirtualHostTest extends \PHPUnit_Framework_TestCase
     {
 
         // initialize the array with the methods to mock
-        $methodsToMock = array('connect', 'getAttribute', 'getBaseDirectory', 'getAppBase', 'getWebappPath', 'getName');
+        $methodsToMock = array(
+            'connect',
+            'getAttribute',
+            'getBaseDirectory',
+            'getAppBase',
+            'getWebappPath',
+            'getName',
+            'getTmpDir',
+            'getSessionDir',
+            'getCacheDir',
+            'getUser',
+            'getGroup',
+            'getUmask'
+        );
 
         // create a mock object for the application
         $applicationMock = $this->getMock('TechDivision\Application\Interfaces\ApplicationInterface', $methodsToMock);

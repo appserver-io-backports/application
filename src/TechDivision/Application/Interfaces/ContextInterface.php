@@ -65,4 +65,11 @@ interface ContextInterface extends Context
      * @return object The class loader used
      */
     public function getClassLoader();
+
+    /**
+     * Returns the system configuration.
+     *
+     * @return \TechDivision\Configuration\Interfaces\ConfigurationInterface The system configuration
+     */
+    public function getSystemConfiguration();
 }
