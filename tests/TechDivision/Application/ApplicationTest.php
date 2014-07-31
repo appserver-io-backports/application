@@ -353,8 +353,8 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetManagers()
     {
-        $this->application->addManager($mockManager1 = new MockManager('test_01'));
-        $this->application->addManager($mockManager2 = new MockManager('test_02'));
+        $this->application->addManager(new MockManager('test_01'));
+        $this->application->addManager(new MockManager('test_02'));
         $this->assertEquals(2, sizeof($this->application->getManagers()));
         foreach ($this->application->getManagers() as $manager) {
             $this->assertInstanceOf('TechDivision\Application\Interfaces\ManagerInterface', $manager);
