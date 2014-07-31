@@ -9,8 +9,7 @@
 		"techdivision/context" : "0.5.*"
 	},
 	"require-dev" : {
-		"phpunit/phpunit" : "3.7.*",
-		"appserver-io/build" : "0.1.*"
+		"appserver-io/build" : ">=0.1"
 	},
 	"autoload" : {
 		"psr-0" : {
