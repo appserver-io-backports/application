@@ -58,11 +58,12 @@ interface ManagerInterface extends Context
     public function initialize(ApplicationInterface $application);
 
     /**
-     * Factory method that adds a initialized manager instance to the passed application.
+     * Visitor method that adds a initialized manager instance to the passed application.
      *
-     * @param \TechDivision\Application\Interfaces\ApplicationInterface $application The application instance
+     * @param \TechDivision\Application\Interfaces\ApplicationInterface               $application          The application instance
+     * @param \TechDivision\Application\Interfaces\ManagerConfigurationInterface|null $managerConfiguration The manager configuration
      *
-     * @return void
+     * @return \TechDivision\Application\Interfaces\ManagerInterface The configured manager instance
      */
-    public static function get(ApplicationInterface $application);
+    public static function visit(ApplicationInterface $application, ManagerConfigurationInterface $managerConfiguration = null);
 }

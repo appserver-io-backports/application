@@ -1,3 +1,14 @@
+# Version 0.2.2
+
+## Bugfixes
+
+* None
+
+## Features
+
+* Rename ManagerInterface::add() method to ManagerInterface::visit()
+* Add new ManagerConfigurationInterface as type hint for ManagerInterface::visit() method
+
 # Version 0.2.1
 
 ## Bugfixes
