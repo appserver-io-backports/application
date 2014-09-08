@@ -44,6 +44,13 @@ class Application extends \Thread implements ApplicationInterface
 {
 
     /**
+     * Whether the application has been connected or not.
+     *
+     * @var boolean
+     */
+    protected $connected;
+
+    /**
      * The absolute path to the applications base directory.
      *
      * @var string
@@ -104,6 +111,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function __construct()
     {
+        $this->connected = false;
         $this->managers = new GenericStackable();
         $this->virtualHosts = new GenericStackable();
         $this->classLoaders = new GenericStackable();
@@ -437,7 +445,25 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function connect()
     {
-        $this->start();
+
+        // synchronize the application startup
+        $this->synchronized(function ($self) {
+
+            // log a message that we now start to connect the application
+            $self->getInitialContext()->getSystemLogger()->debug(sprintf('%s wait to be connected', $this->getName()));
+
+            // start the application
+            $self->start();
+
+            // wait until we've been connected (classloaders and managers has been initialized)
+            while ($self->connected === false) {
+                $self->wait(1000000);
+            }
+
+            // log a message that we has successfully been connected now
+            $self->getInitialContext()->getSystemLogger()->debug(sprintf('%s has successufully been connected', $this->getName()));
+
+        }, $this);
     }
 
     /**
@@ -480,6 +506,9 @@ class Application extends \Thread implements ApplicationInterface
 
         // initialize the managers
         $this->initializeManagers();
+
+        // we're connected now
+        $this->connected = true;
 
         // we do nothing here
         while (true) {

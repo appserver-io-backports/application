@@ -1,3 +1,13 @@
+# Version 0.2.3
+
+## Bugfixes
+
+* None
+
+## Features
+
+* Add synchronization for Application::connect() method to make sure, all class loaders and managers have been initialized
+
 # Version 0.2.2
 
 ## Bugfixes
