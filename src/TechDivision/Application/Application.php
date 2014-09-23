@@ -512,7 +512,9 @@ class Application extends \Thread implements ApplicationInterface
 
         // we do nothing here
         while (true) {
-            $this->wait();
+            $this->synchronized(function ($self) {
+                $self->wait();
+            }, $this);
         }
     }
 }
