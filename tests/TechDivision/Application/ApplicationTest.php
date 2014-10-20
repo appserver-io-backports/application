@@ -26,6 +26,7 @@ use TechDivision\Application\Mock\MockManager;
 use TechDivision\Application\Mock\MockClassLoader;
 use TechDivision\Application\Mock\MockSystemConfiguration;
 use TechDivision\Application\Interfaces\ApplicationInterface;
+use TechDivision\Storage\GenericStackable;
 
 /**
  * Test implementation for the threaded application implementation.
@@ -90,7 +91,19 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
+
+        // create a generic stackable for the necessary storages
+        $this->managers = new GenericStackable();
+        $this->virtualHosts = new GenericStackable();
+        $this->classLoaders = new GenericStackable();
+
+        // initialize the application instance
         $this->application = new Application();
+
+        // inject the storages
+        $this->application->injectVirtualHosts($this->virtualHosts);
+        $this->application->injectManagers($this->managers);
+        $this->application->injectClassLoaders($this->classLoaders);
     }
 
     /**
@@ -177,6 +190,36 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
         // check if the passed instance is equal to the getter one
         $this->application->injectInitialContext($mockInitialContext);
         $this->assertEquals($mockInitialContext, $this->application->getInitialContext());
+    }
+
+    /**
+     * Test if the getter/setter for the managers works.
+     *
+     * @return void
+     */
+    public function testInjectGetManagers()
+    {
+        $this->assertEquals($this->managers, $this->application->getManagers());
+    }
+
+    /**
+     * Test if the getter/setter for the virtual hosts works.
+     *
+     * @return void
+     */
+    public function testInjectGetVirtualHosts()
+    {
+        $this->assertEquals($this->virtualHosts, $this->application->getVirtualHosts());
+    }
+
+    /**
+     * Test if the getter/setter for the class loaders works.
+     *
+     * @return void
+     */
+    public function testInjectGetClassLoaders()
+    {
+        $this->assertEquals($this->classLoaders, $this->application->getClassLoaders());
     }
 
     /**
@@ -353,8 +396,14 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetManagers()
     {
-        $this->application->addManager(new MockManager('test_01'));
-        $this->application->addManager(new MockManager('test_02'));
+
+        // initialize the managers
+        $mgr1 = new MockManager('test_01');
+        $mgr2 = new MockManager('test_02');
+
+        // add the managers
+        $this->application->addManager($mgr1);
+        $this->application->addManager($mgr2);
         $this->assertEquals(2, sizeof($this->application->getManagers()));
         foreach ($this->application->getManagers() as $manager) {
             $this->assertInstanceOf('TechDivision\Application\Interfaces\ManagerInterface', $manager);
