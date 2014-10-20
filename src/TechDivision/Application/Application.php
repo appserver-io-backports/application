@@ -112,9 +112,6 @@ class Application extends \Thread implements ApplicationInterface
     public function __construct()
     {
         $this->connected = false;
-        $this->managers = new GenericStackable();
-        $this->virtualHosts = new GenericStackable();
-        $this->classLoaders = new GenericStackable();
     }
 
     /**
@@ -128,6 +125,42 @@ class Application extends \Thread implements ApplicationInterface
     public function getAttribute($name)
     {
         throw new \Exception(__METHOD__ . ' not implemented yet');
+    }
+
+    /**
+     * Injects the storage for the managers.
+     *
+     * @param \TechDivision\Storage\GenericStackable $managers The storage for the managers
+     *
+     * @return void
+     */
+    public function injectManagers(GenericStackable $managers)
+    {
+        $this->managers = $managers;
+    }
+
+    /**
+     * Injects the storage for the virtual hosts.
+     *
+     * @param \TechDivision\Storage\GenericStackable $managers The storage for the virtual hosts
+     *
+     * @return void
+     */
+    public function injectVirtualHosts(GenericStackable $virtualHosts)
+    {
+        $this->virtualHosts = $virtualHosts;
+    }
+
+    /**
+     * Injects the storage for the class loaders.
+     *
+     * @param \TechDivision\Storage\GenericStackable $managers The storage for the class loaders
+     *
+     * @return void
+     */
+    public function injectClassLoaders(GenericStackable $classLoaders)
+    {
+        $this->classLoaders = $classLoaders;
     }
 
     /**

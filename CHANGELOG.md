@@ -1,3 +1,13 @@
+# Version 0.2.5
+
+## Bugfixes
+
+* Inject all Stackable instances instead of initialize them in Application::__construct => pthreads 2.x compatibility
+
+## Features
+
+* None
+
 # Version 0.2.4
 
 ## Bugfixes
