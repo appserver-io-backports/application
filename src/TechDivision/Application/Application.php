@@ -142,7 +142,7 @@ class Application extends \Thread implements ApplicationInterface
     /**
      * Injects the storage for the virtual hosts.
      *
-     * @param \TechDivision\Storage\GenericStackable $managers The storage for the virtual hosts
+     * @param \TechDivision\Storage\GenericStackable $virtualHosts The storage for the virtual hosts
      *
      * @return void
      */
@@ -154,7 +154,7 @@ class Application extends \Thread implements ApplicationInterface
     /**
      * Injects the storage for the class loaders.
      *
-     * @param \TechDivision\Storage\GenericStackable $managers The storage for the class loaders
+     * @param \TechDivision\Storage\GenericStackable $classLoaders The storage for the class loaders
      *
      * @return void
      */
