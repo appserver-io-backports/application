@@ -1,3 +1,13 @@
+# Version 0.3.0
+
+## Bugfixes
+
+* None
+
+## Features
+
+* Remove ManagerInterface::visit() method because of new factory integration to initialize manager instances
+
 # Version 0.2.5
 
 ## Bugfixes
