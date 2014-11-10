@@ -22,6 +22,7 @@
 
 namespace TechDivision\Application;
 
+use AppserverIo\Logger\LoggerUtils;
 use TechDivision\Storage\GenericStackable;
 use TechDivision\Application\Interfaces\ManagerInterface;
 use TechDivision\Application\Interfaces\ContextInterface;
@@ -44,67 +45,11 @@ class Application extends \Thread implements ApplicationInterface
 {
 
     /**
-     * Whether the application has been connected or not.
+     * The time we wait after each loop.
      *
-     * @var boolean
+     * @var integer
      */
-    protected $connected;
-
-    /**
-     * The absolute path to the applications base directory.
-     *
-     * @var string
-     */
-    protected $appBase;
-
-    /**
-     * The absolute path to the applications temporary directory.
-     *
-     * @var string
-     */
-    protected $tmpDir;
-
-    /**
-     * The web containers base directory.
-     *
-     * @var string
-     */
-    protected $baseDirectory;
-
-    /**
-     * The unique application name.
-     *
-     * @var string
-     */
-    protected $name;
-
-    /**
-     * The initial context instance.
-     *
-     * @var \TechDivision\Application\Interfaces\ContextInterface
-     */
-    protected $initialContext;
-
-    /**
-     * Storage for the available VHost configurations.
-     *
-     * @var \TechDivision\Storage\GenericStackable
-     */
-    protected $virtualHosts;
-
-    /**
-     * Storage for the available managers.
-     *
-     * @var \TechDivision\Storage\GenericStackable
-     */
-    protected $managers;
-
-    /**
-     * Storage for the available class loaders.
-     *
-     * @var \TechDivision\Storage\GenericStackable
-     */
-    protected $classLoaders;
+    const TIME_TO_LIVE = 1;
 
     /**
      * Initializes the application context.
@@ -490,7 +435,7 @@ class Application extends \Thread implements ApplicationInterface
 
             // wait until we've been connected (classloaders and managers has been initialized)
             while ($self->connected === false) {
-                $self->wait(1000000);
+                $self->wait(1000000 * Application::TIME_TO_LIVE);
             }
 
             // log a message that we has successfully been connected now
@@ -540,14 +485,23 @@ class Application extends \Thread implements ApplicationInterface
         // initialize the managers
         $this->initializeManagers();
 
+        // initialize the profile logger and the thread context
+        if ($profileLogger = $this->getInitialContext()->getLogger(LoggerUtils::PROFILE)) {
+            $profileLogger->appendThreadContext('application');
+        }
+
         // we're connected now
         $this->connected = true;
 
         // we do nothing here
         while (true) {
+
             $this->synchronized(function ($self) {
-                $self->wait();
+                $self->wait(1000000 * Application::TIME_TO_LIVE);
             }, $this);
+
+            // profile the connection beeing processed
+            $profileLogger->debug('Successfully processed incoming connection');
         }
     }
 }
