@@ -1,3 +1,14 @@
+# Version 0.3.1
+
+## Bugfixes
+
+* None
+
+## Features
+
+* Add dependency to appserver-io/logger for profiling purposes
+* Add basic profiling of application state and memory
+
 # Version 0.3.0
 
 ## Bugfixes
