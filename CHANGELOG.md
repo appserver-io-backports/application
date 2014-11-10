@@ -1,3 +1,13 @@
+# Version 0.3.2
+
+## Bugfixes
+
+* Query profile logger to be initialized or not
+
+## Features
+
+* None
+
 # Version 0.3.1
 
 ## Bugfixes
