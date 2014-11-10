@@ -486,6 +486,7 @@ class Application extends \Thread implements ApplicationInterface
         $this->initializeManagers();
 
         // initialize the profile logger and the thread context
+        $profileLogger = null;
         if ($profileLogger = $this->getInitialContext()->getLogger(LoggerUtils::PROFILE)) {
             $profileLogger->appendThreadContext('application');
         }
@@ -500,8 +501,9 @@ class Application extends \Thread implements ApplicationInterface
                 $self->wait(1000000 * Application::TIME_TO_LIVE);
             }, $this);
 
-            // profile the connection beeing processed
-            $profileLogger->debug('Successfully processed incoming connection');
+            if ($profileLogger) { // profile the application context
+                $profileLogger->debug(sprintf('Application %s is running', $this->getName()));
+            }
         }
     }
 }
