@@ -24,10 +24,13 @@ namespace TechDivision\Application;
 
 use AppserverIo\Logger\LoggerUtils;
 use TechDivision\Storage\GenericStackable;
+use TechDivision\Naming\NamingDirectoryInterface;
+use TechDivision\Lang\Reflection\AnnotationInterface;
 use TechDivision\Application\Interfaces\ManagerInterface;
 use TechDivision\Application\Interfaces\ContextInterface;
 use TechDivision\Application\Interfaces\ApplicationInterface;
 use TechDivision\Application\Interfaces\VirtualHostInterface;
+use TechDivision\Application\Interfaces\DependencyInjectionContainerInterface;
 
 /**
  * The application instance holds all information about the deployed application
@@ -70,6 +73,18 @@ class Application extends \Thread implements ApplicationInterface
     public function getAttribute($name)
     {
         throw new \Exception(__METHOD__ . ' not implemented yet');
+    }
+
+    /**
+     * Injects the naming directory.
+     *
+     * @param \TechDivision\Naming\NamingDirectoryInterface $namingDirectory The naming directory instance
+     *
+     * @return void
+     */
+    public function injectNamingDirectory(NamingDirectoryInterface $namingDirectory)
+    {
+        $this->namingDirectory = $namingDirectory;
     }
 
     /**
@@ -133,39 +148,15 @@ class Application extends \Thread implements ApplicationInterface
     }
 
     /**
-     * Injects the absolute path to the applications base directory.
+     * Injects the DI container implementation.
      *
-     * @param string $appBase The absolute path to the applications base directory
-     *
-     * @return void
-     */
-    public function injectAppBase($appBase)
-    {
-        $this->appBase = $appBase;
-    }
-
-    /**
-     * Injects the absolute path to the applications temporary directory.
-     *
-     * @param string $tmpDir The absolute path to the applications temporary directory
+     * @param \TechDivision\Application\Interfaces\DependencyInjectionContainerInterface $dependencyInjectionContainer The DI container implementation
      *
      * @return void
      */
-    public function injectTmpDir($tmpDir)
+    public function injectDependencyInjectionContainer(DependencyInjectionContainerInterface $dependencyInjectionContainer)
     {
-        $this->tmpDir = $tmpDir;
-    }
-
-    /**
-     * Injects the containers base directory.
-     *
-     * @param string $baseDirectory The web containers base directory
-     *
-     * @return void
-     */
-    public function injectBaseDirectory($baseDirectory)
-    {
-        $this->baseDirectory = $baseDirectory;
+        $this->dependencyInjectionContainer = $dependencyInjectionContainer;
     }
 
     /**
@@ -179,6 +170,26 @@ class Application extends \Thread implements ApplicationInterface
     }
 
     /**
+     * Returns the applications naming directory.
+     *
+     * @return \TechDivision\Naming\NamingDirectoryInterface The applications naming directory interface
+     */
+    public function getNamingDirectory()
+    {
+        return $this->namingDirectory;
+    }
+
+    /**
+     * Returns the DI container instance.
+     *
+     * @return \TechDivision\Application\Interfaces\DependencyInjectionContainerInterface The DI container instance
+     */
+    public function getDependencyInjectionContainer()
+    {
+        return $this->dependencyInjectionContainer;
+    }
+
+    /**
      * Returns the absolute path to the servers document root directory
      *
      * @param string $directoryToAppend The directory to append to the base directory
@@ -187,7 +198,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function getBaseDirectory($directoryToAppend = null)
     {
-        $baseDirectory = $this->baseDirectory;
+        $baseDirectory = $this->getNamingDirectory()->search('php:env/baseDirectory');
         if ($directoryToAppend != null) {
             $baseDirectory .= $directoryToAppend;
         }
@@ -211,7 +222,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function getAppBase()
     {
-        return $this->appBase;
+        return $this->getNamingDirectory()->search('php:env/appBase');
     }
 
     /**
@@ -221,7 +232,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function getTmpDir()
     {
-        return $this->tmpDir;
+        return $this->getNamingDirectory()->search(sprintf('php:env/%s/tmpDirectory', $this->getName()));
     }
 
     /**
@@ -251,7 +262,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function getUser()
     {
-        return $this->getInitialContext()->getSystemConfiguration()->getUser();
+        return $this->getNamingDirectory()->search('php:env/user');
     }
 
     /**
@@ -261,7 +272,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function getGroup()
     {
-        return $this->getInitialContext()->getSystemConfiguration()->getGroup();
+        return $this->getNamingDirectory()->search('php:env/group');
     }
 
     /**
@@ -271,21 +282,7 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function getUmask()
     {
-        return $this->getInitialContext()->getSystemConfiguration()->getUmask();
-    }
-
-    /**
-     * (non-PHPdoc)
-     *
-     * @param string $className The fully qualified class name to return the instance for
-     * @param array  $args      Arguments to pass to the constructor of the instance
-     *
-     * @return object The instance itself
-     * @see \TechDivision\Application\Interfaces\ContextInterface::newInstance()
-     */
-    public function newInstance($className, array $args = array())
-    {
-        return $this->getInitialContext()->newInstance($className, $args);
+        return $this->getNamingDirectory()->search('php:env/umask');
     }
 
     /**
@@ -410,7 +407,17 @@ class Application extends \Thread implements ApplicationInterface
      */
     public function addManager(ManagerInterface $manager)
     {
-        $this->managers[$manager->getIdentifier()] = $manager;
+
+        // load the managers identifier
+        $identifier = $manager->getIdentifier();
+
+        // register the manager in the naming directory
+        $this->getNamingDirectory()->bind(sprintf('%s', $identifier), array(&$this, 'getManager'), array($identifier));
+        $this->getNamingDirectory()->bind(sprintf('php:app/%s', $identifier), array(&$this, 'getManager'), array($identifier));
+        $this->getNamingDirectory()->bind(sprintf('php:global/%s/%s', $this->getName(), $identifier), array(&$this, 'getManager'), array($identifier));
+
+        // register the manager instance itself
+        $this->managers[$identifier] = $manager;
     }
 
     /**
@@ -467,6 +474,43 @@ class Application extends \Thread implements ApplicationInterface
         foreach ($this->getManagers() as $manager) {
             $manager->initialize($this);
         }
+    }
+
+    /**
+     * Creates a new new instance of the annotation type, defined in the passed reflection annotation.
+     *
+     * @param \TechDivision\Lang\Reflection\AnnotationInterface $annotation The reflection annotation we want to create the instance for
+     *
+     * @return \TechDivision\Lang\Reflection\AnnotationInterface The real annotation instance
+     */
+    public function newAnnotationInstance(AnnotationInterface $annotation)
+    {
+        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newAnnotationInstance($annotation);
+    }
+
+    /**
+     * Returns a reflection class intance for the passed class name.
+     *
+     * @param string $className The class name to return the reflection instance for
+     *
+     * @return \TechDivision\Lang\Reflection\ReflectionClass The reflection instance
+     */
+    public function newReflectionClass($className)
+    {
+        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newReflectionClass($className);
+    }
+
+    /**
+     * Returns a new instance of the passed class name.
+     *
+     * @param string $className The fully qualified class name to return the instance for
+     * @param array  $args      Arguments to pass to the constructor of the instance
+     *
+     * @return object The instance itself
+     */
+    public function newInstance($className, array $args = array())
+    {
+        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newInstance($className, $args);
     }
 
     /**

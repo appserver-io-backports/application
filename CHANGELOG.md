@@ -1,3 +1,15 @@
+# Version 0.3.3
+
+## Bugfixes
+
+* None
+
+## Features
+
+* Add dependency to techdivision/naming package
+* Add DependencyInjectionContainerInterface
+* NamingDirectory integration
+
 # Version 0.3.2
 
 ## Bugfixes

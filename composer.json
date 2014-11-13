@@ -5,7 +5,10 @@
 	"license" : "OSL-3.0",
 	"require" : {
 		"php" : ">=5.4.0",
+        "nikic/phlexy" : "dev-master",
 		"appserver-io/logger" : "0.1.*",
+		"techdivision/lang" : "0.1.*",
+		"techdivision/naming" : "0.1.*",
 		"techdivision/storage" : "0.5.*",
 		"techdivision/context" : "0.5.*"
 	},
