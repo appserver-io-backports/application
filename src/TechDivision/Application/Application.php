@@ -148,18 +148,6 @@ class Application extends \Thread implements ApplicationInterface
     }
 
     /**
-     * Injects the DI container implementation.
-     *
-     * @param \TechDivision\Application\Interfaces\DependencyInjectionContainerInterface $dependencyInjectionContainer The DI container implementation
-     *
-     * @return void
-     */
-    public function injectDependencyInjectionContainer(DependencyInjectionContainerInterface $dependencyInjectionContainer)
-    {
-        $this->dependencyInjectionContainer = $dependencyInjectionContainer;
-    }
-
-    /**
      * Returns the application name (that has to be the class namespace, e.g. TechDivision\Example)
      *
      * @return string The application name
@@ -177,16 +165,6 @@ class Application extends \Thread implements ApplicationInterface
     public function getNamingDirectory()
     {
         return $this->namingDirectory;
-    }
-
-    /**
-     * Returns the DI container instance.
-     *
-     * @return \TechDivision\Application\Interfaces\DependencyInjectionContainerInterface The DI container instance
-     */
-    public function getDependencyInjectionContainer()
-    {
-        return $this->dependencyInjectionContainer;
     }
 
     /**
@@ -503,14 +481,15 @@ class Application extends \Thread implements ApplicationInterface
     /**
      * Returns a new instance of the passed class name.
      *
-     * @param string $className The fully qualified class name to return the instance for
-     * @param array  $args      Arguments to pass to the constructor of the instance
+     * @param string      $className The fully qualified class name to return the instance for
+     * @param string|null $sessionId The session-ID, necessary to inject stateful session beans (SFBs)
+     * @param array       $args      Arguments to pass to the constructor of the instance
      *
      * @return object The instance itself
      */
-    public function newInstance($className, array $args = array())
+    public function newInstance($className, $sessionId = null, array $args = array())
     {
-        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newInstance($className, $args);
+        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newInstance($className, $sessionId, $args);
     }
 
     /**
