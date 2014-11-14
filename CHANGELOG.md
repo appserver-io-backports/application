@@ -1,3 +1,14 @@
+# Version 0.3.4
+
+## Bugfixes
+
+* Remove invalid Application::getDependencyInjectionContainer() + Application::injectDependencyInjectionContainer() methods
+
+## Features
+
+* Add ApplicationInterface::getInstance() + ApplicationInterface::getNamingDirectory() methods
+* Add missing methods to DependencyInjectionContainerInterface
+
 # Version 0.3.3
 
 ## Bugfixes
