@@ -1,3 +1,14 @@
+# Version 0.3.5
+
+## Bugfixes
+
+* None
+
+## Features
+
+* ApplicationInterface now extends NamingDirectoryInterface
+* Application is also used as NamingDirectory now
+
 # Version 0.3.4
 
 ## Bugfixes
