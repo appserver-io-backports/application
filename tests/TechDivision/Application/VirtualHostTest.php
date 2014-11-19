@@ -101,7 +101,13 @@ class VirtualHostTest extends \PHPUnit_Framework_TestCase
             'getGroup',
             'getUmask',
             'newInstance',
-            'getNamingDirectory'
+            'getNamingDirectory',
+            'getParent',
+            'getScheme',
+            'bind',
+            'bindCallback',
+            'search',
+            'createSubdirectory'
         );
 
         // create a mock object for the application

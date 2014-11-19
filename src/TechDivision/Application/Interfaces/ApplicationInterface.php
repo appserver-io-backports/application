@@ -23,7 +23,7 @@
 
 namespace TechDivision\Application\Interfaces;
 
-use TechDivision\Context\Context;
+use TechDivision\Naming\NamingDirectoryInterface;
 
 /**
  * Interface ApplicationInterface
@@ -37,7 +37,7 @@ use TechDivision\Context\Context;
  * @link       https://github.com/techdivision/TechDivision_Application
  * @link       http://www.appserver.io
  */
-interface ApplicationInterface extends Context
+interface ApplicationInterface extends NamingDirectoryInterface
 {
 
     /**
@@ -142,15 +142,4 @@ interface ApplicationInterface extends Context
      * @return \TechDivision\Naming\NamingDirectoryInterface The applications naming directory interface
      */
     public function getNamingDirectory();
-
-    /**
-     * Returns a new instance of the passed class name.
-     *
-     * @param string      $className The fully qualified class name to return the instance for
-     * @param string|null $sessionId The session-ID, necessary to inject stateful session beans (SFBs)
-     * @param array       $args      Arguments to pass to the constructor of the instance
-     *
-     * @return object The instance itself
-     */
-    public function newInstance($className, $sessionId = null, array $args = array());
 }

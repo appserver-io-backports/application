@@ -22,12 +22,14 @@
 
 namespace TechDivision\Application;
 
+use TechDivision\Naming\NamingDirectory;
+use TechDivision\Storage\GenericStackable;
+use TechDivision\Storage\StackableStorage;
 use TechDivision\Application\Mock\MockManager;
 use TechDivision\Application\Mock\MockClassLoader;
 use TechDivision\Application\Mock\MockSystemConfiguration;
 use TechDivision\Application\Interfaces\ApplicationInterface;
-use TechDivision\Storage\GenericStackable;
-use TechDivision\Naming\NamingDirectory;
+use TechDivision\EnterpriseBeans\Annotations\AnnotationKeys;
 
 /**
  * Test implementation for the threaded application implementation.
@@ -135,6 +137,13 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     protected $classLoaders;
 
     /**
+     * The storage for the naming directory data.
+     *
+     * @var \TechDivision\Storage\StackableStorage
+     */
+    protected $data;
+
+    /**
      * Initialize the instance to test.
      *
      * @return void
@@ -142,30 +151,37 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
 
+
+        // initialize the application instance
+        $this->application = new Application();
+
         // create a generic stackable for the necessary storages
+        $this->data = new StackableStorage();
         $this->managers = new GenericStackable();
         $this->virtualHosts = new GenericStackable();
         $this->classLoaders = new GenericStackable();
 
         // create a mock instance of the naming directory
-        $namingDirectory = new NamingDirectory();
-        $namingDirectory->bind('php:env/user', ApplicationTest::USER);
-        $namingDirectory->bind('php:env/group', ApplicationTest::GROUP);
-        $namingDirectory->bind('php:env/umask', ApplicationTest::UMASK);
-        $namingDirectory->bind('php:env/tmpDirectory', ApplicationTest::GLOBAL_TMP_DIR);
-        $namingDirectory->bind('php:env/foo/tmpDirectory', ApplicationTest::TMP_DIR);
-        $namingDirectory->bind('php:env/baseDirectory', ApplicationTest::BASE_DIRECTORY);
-        $namingDirectory->bind('php:env/appBase', ApplicationTest::APP_BASE);
+        $this->namingDirectory = new NamingDirectory();
+        $this->namingDirectory->setScheme('php');
+        $this->envDir = $this->namingDirectory->createSubdirectory('env');
 
-        // initialize the application instance
-        $this->application = new Application();
+        $this->namingDirectory->bind('php:global/foo', $this->application);
+        $this->namingDirectory->bind('php:env/user', ApplicationTest::USER);
+        $this->namingDirectory->bind('php:env/group', ApplicationTest::GROUP);
+        $this->namingDirectory->bind('php:env/umask', ApplicationTest::UMASK);
+        $this->namingDirectory->bind('php:env/tmpDirectory', ApplicationTest::GLOBAL_TMP_DIR);
+        $this->namingDirectory->bind('php:env/foo/tmpDirectory', ApplicationTest::TMP_DIR);
+        $this->namingDirectory->bind('php:env/baseDirectory', ApplicationTest::BASE_DIRECTORY);
+        $this->namingDirectory->bind('php:env/appBase', ApplicationTest::APP_BASE);
 
         // inject the storages
         $this->application->injectName(ApplicationTest::NAME);
-        $this->application->injectVirtualHosts($this->virtualHosts);
+        $this->application->injectData($this->data);
         $this->application->injectManagers($this->managers);
+        $this->application->injectVirtualHosts($this->virtualHosts);
         $this->application->injectClassLoaders($this->classLoaders);
-        $this->application->injectNamingDirectory($namingDirectory);
+        $this->application->injectNamingDirectory($this->namingDirectory);
     }
 
     /**
@@ -406,11 +422,11 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
      * Test if the class loader has been added successfully.
      *
      * @return void
-     * @expectedException \Exception
      */
-    public function testGetAttribute()
+    public function testSetGetAttribute()
     {
-        $this->application->getAttribute(ApplicationTest::NAME);
+        $this->application->setAttribute($key = 'test', ApplicationTest::NAME);
+        $this->assertSame(ApplicationTest::NAME, $this->application->getAttribute($key));
     }
 
     /**
@@ -420,7 +436,26 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
      */
     public function testAddManager()
     {
-        $this->application->addManager($mockManager = new MockManager());
+
+        // prepare the lookup names
+        $lookupNames = array(
+            AnnotationKeys::NAME => MockManager::IDENTIFIER,
+            AnnotationKeys::BEAN_NAME => 'MockManager',
+            AnnotationKeys::BEAN_INTERFACE => 'MockInterface',
+            AnnotationKeys::MAPPED_NAME => 'MappedMockManager'
+        );
+
+        // define the methods to mock
+        $methodsToMock = array('getLookup', 'getParamsAsArray',  'getBeanName', 'getMappedName', 'getBeanInterface',  'getFactory', 'getType', 'getName', 'toLookupNames');
+
+        // create a mock manager configuration
+        $mockManagerConfiguration = $this->getMock('TechDivision\Application\Interfaces\ManagerConfigurationInterface', $methodsToMock);
+        $mockManagerConfiguration->expects($this->any())
+            ->method('toLookupNames')
+            ->will($this->returnValue($lookupNames));
+
+        // add a mock manager
+        $this->application->addManager($mockManager = new MockManager(), $mockManagerConfiguration);
         $this->assertEquals($mockManager, $this->application->getManager(MockManager::IDENTIFIER));
     }
 
@@ -442,13 +477,44 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     public function testGetManagers()
     {
 
+        // define the methods to mock
+        $methodsToMock = array('getLookup', 'getParamsAsArray',  'getBeanName', 'getMappedName', 'getBeanInterface',  'getFactory', 'getType', 'getName', 'toLookupNames');
+
+        // prepare the lookup names
+        $lookupNames1 = array(
+            AnnotationKeys::NAME => 'MockManager1',
+            AnnotationKeys::BEAN_NAME => 'MockManager1',
+            AnnotationKeys::BEAN_INTERFACE => 'MockInterface1',
+            AnnotationKeys::MAPPED_NAME => 'MappedMockManager1'
+        );
+
+        // prepare the lookup names
+        $lookupNames2 = array(
+            AnnotationKeys::NAME => 'MockManager2',
+            AnnotationKeys::BEAN_NAME => 'MockManager2',
+            AnnotationKeys::BEAN_INTERFACE => 'MockInterface2',
+            AnnotationKeys::MAPPED_NAME => 'MappedMockManager2'
+        );
+
+        // create a mock manager configuration
+        $mockManagerConfiguration1 = $this->getMock('TechDivision\Application\Interfaces\ManagerConfigurationInterface', $methodsToMock);
+        $mockManagerConfiguration1->expects($this->any())
+            ->method('toLookupNames')
+            ->will($this->returnValue($lookupNames1));
+
+        // create a mock manager configuration
+        $mockManagerConfiguration2 = $this->getMock('TechDivision\Application\Interfaces\ManagerConfigurationInterface', $methodsToMock);
+        $mockManagerConfiguration2->expects($this->any())
+            ->method('toLookupNames')
+            ->will($this->returnValue($lookupNames2));
+
         // initialize the managers
         $mgr1 = new MockManager('test_01');
         $mgr2 = new MockManager('test_02');
 
         // add the managers
-        $this->application->addManager($mgr1);
-        $this->application->addManager($mgr2);
+        $this->application->addManager($mgr1, $mockManagerConfiguration1);
+        $this->application->addManager($mgr2, $mockManagerConfiguration2);
         $this->assertEquals(2, sizeof($this->application->getManagers()));
         foreach ($this->application->getManagers() as $manager) {
             $this->assertInstanceOf('TechDivision\Application\Interfaces\ManagerInterface', $manager);
@@ -479,8 +545,25 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
     public function testInitializeManagers()
     {
 
+        // prepare the lookup names
+        $lookupNames = array(
+            AnnotationKeys::NAME => 'MockManager',
+            AnnotationKeys::BEAN_NAME => 'MockManager',
+            AnnotationKeys::BEAN_INTERFACE => 'MockInterface',
+            AnnotationKeys::MAPPED_NAME => 'MappedMockManager'
+        );
+
+        // define the methods to mock
+        $methodsToMock = array('getLookup', 'getParamsAsArray',  'getBeanName', 'getMappedName', 'getBeanInterface',  'getFactory', 'getType', 'getName', 'toLookupNames');
+
+        // create a mock manager configuration
+        $mockManagerConfiguration = $this->getMock('TechDivision\Application\Interfaces\ManagerConfigurationInterface', $methodsToMock);
+        $mockManagerConfiguration->expects($this->any())
+            ->method('toLookupNames')
+            ->will($this->returnValue($lookupNames));
+
         // register the mock manager instance
-        $this->application->addManager($mockManager = new MockManager());
+        $this->application->addManager($mockManager = new MockManager(), $mockManagerConfiguration);
         $this->application->initializeManagers();
 
         // check that the mock manager has been initialized

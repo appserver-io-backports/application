@@ -23,14 +23,19 @@
 namespace TechDivision\Application;
 
 use AppserverIo\Logger\LoggerUtils;
-use TechDivision\Storage\GenericStackable;
+use TechDivision\Naming\NamingDirectory;
+use TechDivision\Naming\NamingException;
 use TechDivision\Naming\NamingDirectoryInterface;
-use TechDivision\Lang\Reflection\AnnotationInterface;
+use TechDivision\Storage\GenericStackable;
+use TechDivision\Storage\StorageInterface;
+use TechDivision\Lang\Reflection\ReflectionObject;
+use TechDivision\EnterpriseBeans\Annotations\EnterpriseBean;
+use TechDivision\EnterpriseBeans\Annotations\AnnotationKeys;
 use TechDivision\Application\Interfaces\ManagerInterface;
 use TechDivision\Application\Interfaces\ContextInterface;
 use TechDivision\Application\Interfaces\ApplicationInterface;
 use TechDivision\Application\Interfaces\VirtualHostInterface;
-use TechDivision\Application\Interfaces\DependencyInjectionContainerInterface;
+use TechDivision\Application\Interfaces\ManagerConfigurationInterface;
 
 /**
  * The application instance holds all information about the deployed application
@@ -63,16 +68,63 @@ class Application extends \Thread implements ApplicationInterface
     }
 
     /**
-     * Returns a attribute from the application context.
+     * Returns the value with the passed name from the context.
      *
-     * @param string $name the name of the attribute to return
+     * @param string $key The key of the value to return from the context.
      *
-     * @throws \Exception
+     * @return mixed The requested attribute
+     * @see \TechDivision\Context\Context::getAttribute()
+     */
+    public function getAttribute($key)
+    {
+        return $this->data->get($key);
+    }
+
+    /**
+     * Queries if the attribute with the passed key is bound.
+     *
+     * @param string $key The key of the attribute to query
+     *
+     * @return boolean TRUE if the attribute is bound, else FALSE
+     */
+    public function hasAttribute($key)
+    {
+        return $this->data->has($key);
+    }
+
+    /**
+     * Sets the passed key/value pair in the directory.
+     *
+     * @param string $key   The attributes key
+     * @param mixed  $value Tha attribute to be bound
+     *
      * @return void
      */
-    public function getAttribute($name)
+    public function setAttribute($key, $value)
     {
-        throw new \Exception(__METHOD__ . ' not implemented yet');
+        $this->data->set($key, $value);
+    }
+
+    /**
+     * Returns the keys of the bound attributes.
+     *
+     * @return array The keys of the bound attributes
+     */
+    public function getAllKeys()
+    {
+        return $this->data->getAllKeys();
+    }
+
+    /**
+     * Injects the storage for the naming directory data.
+     *
+     * @param \TechDivision\Storage\StorageInterface $data The naming directory data
+     *
+     * @return void
+     */
+    public function injectData(StorageInterface $data)
+    {
+        $this->data = $data;
     }
 
     /**
@@ -158,6 +210,190 @@ class Application extends \Thread implements ApplicationInterface
     }
 
     /**
+     * Queries the naming directory for the requested name and returns the value
+     * or invokes the binded callback.
+     *
+     * @param string $name The name of the requested value
+     * @param array  $args The arguments to pass to the callback
+     *
+     * @return mixed The requested value
+     * @throws \TechDivision\Naming\NamingException Is thrown if the requested name can't be resolved in the directory
+     */
+    public function search($name, array $args = array())
+    {
+
+        // strip off the schema
+        $name = str_replace(sprintf('%s:', $this->getScheme()), '', $name);
+
+        // tokenize the name
+        $token = strtok($name, '/');
+
+        // while we've tokens, try to find a value bound to the token
+        while ($token !== false) {
+
+            // check if we can find something
+            if ($this->hasAttribute($token)) {
+
+                // load the value
+                $found = $this->getAttribute($token);
+
+                // load the binded value/args
+                list ($value, $bindArgs) = $found;
+
+                // check if we've a callback method
+                if (is_callable($value)) { // if yes, merge the params and invoke the callback
+                    return call_user_func_array($value, array_merge($bindArgs, $args));
+                }
+
+                // search recursive
+                if ($value instanceof NamingDirectoryInterface) {
+
+                    if ($value->getName() !== $name) { // if $value is NOT what we're searching for
+                        return $value->search(str_replace($token . '/', '', $name), $args);
+                    }
+                }
+
+                // if not, simply return the value/object
+                return $value;
+            }
+
+            // load the next token
+            $token = strtok('/');
+        }
+
+        // delegate the search request to the parent directory
+        if ($parent = $this->getParent()) {
+            return $parent->search($name, $args);
+        }
+
+        // throw an exception if we can't resolve the name
+        throw new NamingException(sprintf('Cant\'t resolve %s in naming directory %s', $token, $this->getIdentifier()));
+    }
+
+    /**
+     * Binds the passed instance with the name to the naming directory.
+     *
+     * @param string $name  The name to bind the value with
+     * @param mixed  $value The object instance to bind
+     * @param array  $args  The array with the arguments
+     *
+     * @return void
+     * @throws \TechDivision\Naming\NamingException Is thrown if the value can't be bound ot the directory
+     */
+    public function bind($name, $value, array $args = array())
+    {
+
+        // strip off the schema
+        $name = str_replace(sprintf('%s:', $this->getScheme()), '', $name);
+
+        // tokenize the name
+        $token = strtok($name, '/');
+
+        // while we've tokens, try to find the apropriate subdirectory
+        while ($token !== false) {
+
+            // check if we can find something
+            if ($this->hasAttribute($token)) {
+
+                // load the data bound to the token
+                $data = $this->getAttribute($token);
+
+                // load the binded value/args
+                list ($valueFound, ) = $data;
+
+                // try to bind it to the subdirectory
+                if ($valueFound instanceof NamingDirectoryInterface) {
+                    return $valueFound->bind(str_replace($token . '/', '', $name), $value, $args);
+                }
+
+                // throw an exception if we can't resolve the name
+                throw new NamingException(sprintf('Cant\'t bind %s to value of naming directory %s', $token, $this->getIdentifier()));
+
+            } else { // bind the value
+                return $this->setAttribute($token, array($value, $args));
+            }
+
+            // load the next token
+            $token = strtok('/');
+        }
+
+        // throw an exception if we can't resolve the name
+        throw new NamingException(sprintf('Cant\'t bind %s to naming directory %s', $token, $this->getIdentifier()));
+    }
+
+    /**
+     * Binds the passed callback with the name to the naming directory.
+     *
+     * @param string   $name     The name to bind the callback with
+     * @param callable $callback The callback to be invoked when searching for
+     * @param array    $args     The array with the arguments passed to the callback when executed
+     *
+     * @return void
+     * @see \TechDivision\Naming\NamingDirectoryInterface::bind()
+     */
+    public function bindCallback($name, callable $callback, array $args = array())
+    {
+        $this->bind($name, $callback, $args);
+    }
+
+    /**
+     * Create and return a new naming subdirectory with the attributes
+     * of this one.
+     *
+     * @param string $name   The name of the new subdirectory
+     * @param array  $filter Array with filters that will be applied when copy the attributes
+     *
+     * @return \TechDivision\Naming\NamingDirectory The new naming subdirectory
+     */
+    public function createSubdirectory($name, array $filter = array())
+    {
+
+        // create a new subdirectory instance
+        $subdirectory = new NamingDirectory($name, $this);
+
+        // copy the attributes specified by the filter
+        if (sizeof($filter) > 0) {
+            foreach ($this->getAllKeys() as $key => $value) {
+                foreach ($filter as $pattern) {
+                    if (fnmatch($pattern, $key)) {
+                        $subdirectory->bind($key, $value);
+                    }
+                }
+            }
+        }
+
+        // bind it the directory
+        $this->bind($name, $subdirectory);
+
+        // return the instance
+        return $subdirectory;
+    }
+
+    /**
+     * The unique identifier of this directory. That'll be build up
+     * recursive from the scheme and the root directory.
+     *
+     * @return string The unique identifier
+     * @see \TechDivision\Storage\StorageInterface::getIdentifier()
+     */
+    public function getIdentifier()
+    {
+
+        // check if we've a parent directory
+        if ($parent = $this->getParent()) {
+            return $parent->getIdentifier() . '/' . $this->getName();
+        }
+
+        // if not, we MUST have a scheme, because we're root
+        if ($scheme = $this->getScheme()) {
+            return $scheme . ':' . $this->getName();
+        }
+
+        // the root node needs a scheme
+        throw new NamingException(sprintf('Missing scheme for naming directory', $this->getName()));
+    }
+
+    /**
      * Returns the applications naming directory.
      *
      * @return \TechDivision\Naming\NamingDirectoryInterface The applications naming directory interface
@@ -165,6 +401,34 @@ class Application extends \Thread implements ApplicationInterface
     public function getNamingDirectory()
     {
         return $this->namingDirectory;
+    }
+
+    /**
+     * Returns the applications naming directory.
+     *
+     * @return \TechDivision\Naming\NamingDirectoryInterface The applications naming directory interface
+     * @see \TechDivision\Application\Application::getNamingDirectory()
+     */
+    public function getParent()
+    {
+        return $this->getNamingDirectory();
+    }
+
+    /**
+     * Returns the scheme.
+     *
+     * @return string The scheme we want to use
+     */
+    public function getScheme()
+    {
+
+        // if the parent directory has a schema, return this one
+        if ($parent = $this->getParent()) {
+            return $parent->getScheme();
+        }
+
+        // return our own schema
+        return $this->scheme;
     }
 
     /**
@@ -377,22 +641,37 @@ class Application extends \Thread implements ApplicationInterface
     }
 
     /**
-     * Injects manager instance.
+     * Injects manager instance and the configuration.
      *
-     * @param \TechDivision\Application\Interfaces\ManagerInterface $manager A manager instance
+     * @param \TechDivision\Application\Interfaces\ManagerInterface              $manager       A manager instance
+     * @param \TechDivision\Application\Interfaces\ManagerConfigurationInterface $configuration The managers configuration
      *
      * @return void
      */
-    public function addManager(ManagerInterface $manager)
+    public function addManager(ManagerInterface $manager, ManagerConfigurationInterface $configuration)
     {
 
-        // load the managers identifier
-        $identifier = $manager->getIdentifier();
+        // load the lookup names from the configuration
+        $lookupNames = $configuration->toLookupNames();
 
-        // register the manager in the naming directory
-        $this->getNamingDirectory()->bind(sprintf('%s', $identifier), array(&$this, 'getManager'), array($identifier));
-        $this->getNamingDirectory()->bind(sprintf('php:app/%s', $identifier), array(&$this, 'getManager'), array($identifier));
-        $this->getNamingDirectory()->bind(sprintf('php:global/%s/%s', $this->getName(), $identifier), array(&$this, 'getManager'), array($identifier));
+        // register the bean with the default name (short class name OR @Annotation(name=****))
+        $identifier = $lookupNames[AnnotationKeys::NAME];
+        $this->bind($identifier, array(&$this, 'getManager'), array($identifier));
+
+        // register the bean with the name defined as @Annotation(beanInterface=****)
+        if ($beanInterfaceAttribute = $lookupNames[AnnotationKeys::BEAN_INTERFACE]) {
+            $this->bind($beanInterfaceAttribute, array(&$this, 'getManager'), array($identifier));
+        }
+
+        // register the bean with the name defined as @Annotation(beanName=****)
+        if ($beanNameAttribute = $lookupNames[AnnotationKeys::BEAN_NAME]) {
+            $this->getNamingDirectory()->bind($beanNameAttribute, array(&$this, 'getManager'), array($identifier));
+        }
+
+        // register the bean with the name defined as @Annotation(mappedName=****)
+        if ($mappedNameAttribute = $lookupNames[AnnotationKeys::MAPPED_NAME]) {
+            $this->getNamingDirectory()->bind($mappedNameAttribute, array(&$this, 'getManager'), array($identifier));
+        }
 
         // register the manager instance itself
         $this->managers[$identifier] = $manager;
@@ -452,44 +731,6 @@ class Application extends \Thread implements ApplicationInterface
         foreach ($this->getManagers() as $manager) {
             $manager->initialize($this);
         }
-    }
-
-    /**
-     * Creates a new new instance of the annotation type, defined in the passed reflection annotation.
-     *
-     * @param \TechDivision\Lang\Reflection\AnnotationInterface $annotation The reflection annotation we want to create the instance for
-     *
-     * @return \TechDivision\Lang\Reflection\AnnotationInterface The real annotation instance
-     */
-    public function newAnnotationInstance(AnnotationInterface $annotation)
-    {
-        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newAnnotationInstance($annotation);
-    }
-
-    /**
-     * Returns a reflection class intance for the passed class name.
-     *
-     * @param string $className The class name to return the reflection instance for
-     *
-     * @return \TechDivision\Lang\Reflection\ReflectionClass The reflection instance
-     */
-    public function newReflectionClass($className)
-    {
-        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newReflectionClass($className);
-    }
-
-    /**
-     * Returns a new instance of the passed class name.
-     *
-     * @param string      $className The fully qualified class name to return the instance for
-     * @param string|null $sessionId The session-ID, necessary to inject stateful session beans (SFBs)
-     * @param array       $args      Arguments to pass to the constructor of the instance
-     *
-     * @return object The instance itself
-     */
-    public function newInstance($className, $sessionId = null, array $args = array())
-    {
-        return $this->getManager(DependencyInjectionContainerInterface::IDENTIFIER)->newInstance($className, $sessionId, $args);
     }
 
     /**
